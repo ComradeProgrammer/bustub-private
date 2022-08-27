@@ -14,6 +14,7 @@
 
 #include <list>
 #include <mutex>  // NOLINT
+#include <unordered_map>
 #include <vector>
 
 #include "buffer/replacer.h"
@@ -47,6 +48,15 @@ class LRUReplacer : public Replacer {
 
  private:
   // TODO(student): implement me!
+  struct PageNode {
+    frame_id_t frame_id_;
+    PageNode *next_ = nullptr;
+    PageNode *prev_ = nullptr;
+  };
+  PageNode *page_list_head_ = nullptr;
+  PageNode *page_list_tail_ = nullptr;
+  std::unordered_map<frame_id_t, PageNode *> page_map_;
+  std::mutex lock_;
 };
 
 }  // namespace bustub

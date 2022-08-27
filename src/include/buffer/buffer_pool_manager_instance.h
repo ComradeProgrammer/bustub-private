@@ -18,6 +18,7 @@
 
 #include "buffer/buffer_pool_manager.h"
 #include "buffer/lru_replacer.h"
+#include "common/logger.h"
 #include "recovery/log_manager.h"
 #include "storage/disk/disk_manager.h"
 #include "storage/page/page.h"
@@ -80,6 +81,7 @@ class BufferPoolManagerInstance : public BufferPoolManager {
    * @return false if the page could not be found in the page table, true otherwise
    */
   auto FlushPgImp(page_id_t page_id) -> bool override;
+  auto FlushPgInner(page_id_t page_id) -> bool;
 
   /**
    * Creates a new page in the buffer pool.

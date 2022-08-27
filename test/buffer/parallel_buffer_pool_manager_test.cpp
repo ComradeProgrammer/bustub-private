@@ -21,7 +21,7 @@ namespace bustub {
 
 // NOLINTNEXTLINE
 // Check whether pages containing terminal characters can be recovered
-TEST(ParallelBufferPoolManagerTest, DISABLED_BinaryDataTest) {
+TEST(ParallelBufferPoolManagerTest, BinaryDataTest) {
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 10;
   const size_t num_instances = 5;
@@ -88,7 +88,7 @@ TEST(ParallelBufferPoolManagerTest, DISABLED_BinaryDataTest) {
 }
 
 // NOLINTNEXTLINE
-TEST(ParallelBufferPoolManagerTest, DISABLED_SampleTest) {
+TEST(ParallelBufferPoolManagerTest, SampleTest) {
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 10;
   const size_t num_instances = 5;
@@ -150,5 +150,54 @@ TEST(ParallelBufferPoolManagerTest, DISABLED_SampleTest) {
   delete bpm;
   delete disk_manager;
 }
+TEST(ParallelBufferPoolManagerTest, Test2) {
+  const std::string db_name = "test.db";
+  const size_t buffer_pool_size = 1;
+  const size_t num_instances = 10;
 
+  auto *disk_manager = new DiskManager(db_name);
+  auto *bpm = new ParallelBufferPoolManager(num_instances, buffer_pool_size, disk_manager);
+
+  page_id_t page_id_temp;
+  for (int i = 0; i < 10; i++) {
+    bpm->NewPage(&page_id_temp);
+  }
+  for (int i = 0; i < 10; i++) {
+    bpm->NewPage(&page_id_temp);
+  }
+
+  for (int i = 0; i < 10; i++) {
+    bpm->FetchPage(i);
+    bpm->UnpinPage(i, true);
+    bpm->UnpinPage(i, true);
+  }
+  for (int i = 0; i < 10; i++) {
+    bpm->NewPage(&page_id_temp);
+    bpm->UnpinPage(page_id_temp, true);
+  }
+  for (int i = 0; i < 10; i++) {
+    bpm->FetchPage(i);
+  }
+  bpm->NewPage(&page_id_temp);
+  bpm->DeletePage(4);
+  bpm->UnpinPage(4, false);
+  bpm->DeletePage(4);
+
+  bpm->NewPage(&page_id_temp);
+  for (int i = 5; i <= 7; i++) {
+    bpm->FetchPage(i);
+  }
+  for (int i = 5; i <= 7; i++) {
+    bpm->UnpinPage(i, false);
+  }
+  for (int i = 5; i <= 7; i++) {
+    bpm->UnpinPage(i, false);
+  }
+  bpm->DeletePage(7);
+  disk_manager->ShutDown();
+  remove("test.db");
+
+  delete bpm;
+  delete disk_manager;
+}
 }  // namespace bustub
