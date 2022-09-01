@@ -18,7 +18,6 @@
 #include "common/config.h"
 #include "storage/index/int_comparator.h"
 #include "storage/page/hash_table_page_defs.h"
-
 namespace bustub {
 /**
  * Store indexed key and and value together within bucket page. Supports
@@ -136,6 +135,10 @@ class HashTableBucketPage {
    * Prints the bucket's occupancy information
    */
   void PrintBucket();
+
+ private:
+  void SetBit(char *array, uint32_t index, bool value);
+  bool GetBit(const char *array, uint32_t index) const;
 
  private:
   //  For more on BUCKET_ARRAY_SIZE see storage/page/hash_table_page_defs.h

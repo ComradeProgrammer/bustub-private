@@ -15,7 +15,6 @@
 #include <queue>
 #include <string>
 #include <vector>
-
 #include "buffer/buffer_pool_manager.h"
 #include "concurrency/transaction.h"
 #include "container/hash/hash_function.h"
@@ -83,6 +82,8 @@ class ExtendibleHashTable {
    * Helper function to verify the integrity of the extendible hash table's directory.  Do not touch.
    */
   void VerifyIntegrity();
+
+  void PrintPageDirectory();
 
  private:
   /**
@@ -160,6 +161,13 @@ class ExtendibleHashTable {
    * @param value the value that was removed
    */
   void Merge(Transaction *transaction, const KeyType &key, const ValueType &value);
+  bool MergeInner(Transaction *transaction, const KeyType &key, const ValueType &value);
+
+  uint32_t GetSplitPageIndex(uint32_t bucket_index, HashTableDirectoryPage *dir_page);
+  void RLatchFromBucketPage(HASH_TABLE_BUCKET_TYPE *bucket_page);
+  void RUnLatchFromBucketPage(HASH_TABLE_BUCKET_TYPE *bucket_page);
+  void WLatchFromBucketPage(HASH_TABLE_BUCKET_TYPE *bucket_page);
+  void WUnLatchFromBucketPage(HASH_TABLE_BUCKET_TYPE *bucket_page);
 
   // member variables
   page_id_t directory_page_id_;
