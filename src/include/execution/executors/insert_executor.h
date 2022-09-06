@@ -16,10 +16,10 @@
 #include <utility>
 
 #include "execution/executor_context.h"
+#include "execution/executor_factory.h"
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/insert_plan.h"
 #include "storage/table/tuple.h"
-
 namespace bustub {
 
 /**
@@ -51,7 +51,7 @@ class InsertExecutor : public AbstractExecutor {
    * NOTE: InsertExecutor::Next() does not use the `tuple` out-parameter.
    * NOTE: InsertExecutor::Next() does not use the `rid` out-parameter.
    */
-  auto Next([[maybe_unused]] Tuple *tuple, RID *rid) -> bool override;
+  auto Next([[maybe_unused]] Tuple *unused_a, RID *unused_b) -> bool override;
 
   /** @return The output schema for the insert */
   auto GetOutputSchema() -> const Schema * override { return plan_->OutputSchema(); };
@@ -59,6 +59,11 @@ class InsertExecutor : public AbstractExecutor {
  private:
   /** The insert plan node to be executed*/
   const InsertPlanNode *plan_;
+  TableInfo *table_;
+  // for non-raw insert
+  std::unique_ptr<bustub::AbstractExecutor> child_executor_;
+  // for raw insert
+  size_t raw_insert_ptr_ = 0;
 };
 
 }  // namespace bustub
