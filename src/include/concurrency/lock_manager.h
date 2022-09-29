@@ -18,9 +18,9 @@
 #include <memory>
 #include <mutex>  // NOLINT
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
-
 #include "common/config.h"
 #include "common/rid.h"
 #include "concurrency/transaction.h"
@@ -47,6 +47,7 @@ class LockManager {
   class LockRequestQueue {
    public:
     std::list<LockRequest> request_queue_;
+    std::unordered_set<txn_id_t> pending_txns_;
     // for notifying blocked transactions on this rid
     std::condition_variable cv_;
     // txn_id of an upgrading transaction (if any)
@@ -109,6 +110,11 @@ class LockManager {
 
   /** Lock table for lock requests. */
   std::unordered_map<RID, LockRequestQueue> lock_table_;
+  std::unordered_map<RID, LockMode> locks_status_;
+  std::unordered_map<RID, std::unordered_set<txn_id_t>> locks_txn_;
+
+  void RemoveFromEverywhere(Transaction *txn, std::unique_lock<std::mutex> *lock_function);
+  auto UnlockInner(Transaction *txn, const RID &rid, std::unique_lock<std::mutex> *lock_function) -> bool;
 };
 
 }  // namespace bustub

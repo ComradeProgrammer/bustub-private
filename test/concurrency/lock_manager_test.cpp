@@ -77,7 +77,7 @@ void BasicTest1() {
     delete txns[i];
   }
 }
-TEST(LockManagerTest, DISABLED_BasicTest) { BasicTest1(); }
+TEST(LockManagerTest, BasicTest) { BasicTest1(); }
 
 void TwoPLTest() {
   LockManager lock_mgr{};
@@ -123,7 +123,7 @@ void TwoPLTest() {
 
   delete txn;
 }
-TEST(LockManagerTest, DISABLED_TwoPLTest) { TwoPLTest(); }
+TEST(LockManagerTest, TwoPLTest) { TwoPLTest(); }
 
 void UpgradeTest() {
   LockManager lock_mgr{};
@@ -150,7 +150,7 @@ void UpgradeTest() {
   txn_mgr.Commit(&txn);
   CheckCommitted(&txn);
 }
-TEST(LockManagerTest, DISABLED_UpgradeLockTest) { UpgradeTest(); }
+TEST(LockManagerTest, UpgradeLockTest) { UpgradeTest(); }
 
 void WoundWaitBasicTest() {
   LockManager lock_mgr{};
@@ -167,11 +167,11 @@ void WoundWaitBasicTest() {
     // younger transaction acquires lock first
     Transaction txn_die(id_die);
     txn_mgr.Begin(&txn_die);
-    bool res = lock_mgr.LockExclusive(&txn_die, rid);
+    bool res = lock_mgr.LockShared(&txn_die, rid);
     EXPECT_TRUE(res);
 
     CheckGrowing(&txn_die);
-    CheckTxnLockSize(&txn_die, 0, 1);
+    CheckTxnLockSize(&txn_die, 1, 0);
 
     t1done.set_value();
 
@@ -193,7 +193,9 @@ void WoundWaitBasicTest() {
   // wait for txn1 to lock
   t1_future.wait();
 
-  bool res = lock_mgr.LockExclusive(&txn_hold, rid);
+  bool res = lock_mgr.LockShared(&txn_hold, rid);
+  EXPECT_TRUE(res);
+  res = lock_mgr.LockUpgrade(&txn_hold, rid);
   EXPECT_TRUE(res);
 
   wait_thread.join();
@@ -202,6 +204,6 @@ void WoundWaitBasicTest() {
   txn_mgr.Commit(&txn_hold);
   CheckCommitted(&txn_hold);
 }
-TEST(LockManagerTest, DISABLED_WoundWaitBasicTest) { WoundWaitBasicTest(); }
+TEST(LockManagerTest, WoundWaitBasicTest) { WoundWaitBasicTest(); }
 
 }  // namespace bustub

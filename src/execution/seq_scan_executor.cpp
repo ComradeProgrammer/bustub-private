@@ -25,6 +25,15 @@ void SeqScanExecutor::Init() { iterator_ = table_->table_->Begin(exec_ctx_->GetT
 auto SeqScanExecutor::Next(Tuple *tuple, RID *rid) -> bool {
   const Schema *output_schema = plan_->OutputSchema();
   while (iterator_ != table_->table_->End()) {
+    Transaction *txn = exec_ctx_->GetTransaction();
+    bool acquire_lock = false;
+    if (txn->GetIsolationLevel() != IsolationLevel::READ_UNCOMMITTED &&
+        txn->GetSharedLockSet()->find(iterator_->GetRid()) == txn->GetSharedLockSet()->end() &&
+        txn->GetExclusiveLockSet()->find(iterator_->GetRid()) == txn->GetExclusiveLockSet()->end()) {
+      exec_ctx_->GetLockManager()->LockShared(txn, iterator_->GetRid());
+      acquire_lock = true;
+    }
+
     if (plan_->GetPredicate() == nullptr ||
         plan_->GetPredicate()->Evaluate(&(*iterator_), &(table_->schema_)).GetAs<bool>()) {
       // we need to construct it based on output schema
@@ -42,9 +51,15 @@ auto SeqScanExecutor::Next(Tuple *tuple, RID *rid) -> bool {
 
       *rid = iterator_->GetRid();
       ++iterator_;
+      if (acquire_lock && txn->GetIsolationLevel() == IsolationLevel::READ_COMMITTED) {
+        exec_ctx_->GetLockManager()->Unlock(txn, *rid);
+      }
       return true;
     }
     ++iterator_;
+    if (acquire_lock && txn->GetIsolationLevel() == IsolationLevel::READ_COMMITTED) {
+      exec_ctx_->GetLockManager()->Unlock(txn, *rid);
+    }
   }
 
   return false;

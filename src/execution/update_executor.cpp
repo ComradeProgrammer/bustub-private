@@ -27,10 +27,19 @@ void UpdateExecutor::Init() { child_executor_->Init(); }
 auto UpdateExecutor::Next([[maybe_unused]] Tuple *unused_a, RID *unused_b) -> bool {
   RID rid;
   Tuple old_tuple;
+  Transaction *txn = exec_ctx_->GetTransaction();
+
   if (!child_executor_->Next(&old_tuple, &rid)) {
     return false;
   }
   Tuple new_tuple = GenerateUpdatedTuple(old_tuple);
+
+  if (txn->GetSharedLockSet()->find(rid) != txn->GetSharedLockSet()->end()) {
+    exec_ctx_->GetLockManager()->LockUpgrade(txn, rid);
+  } else if (txn->GetExclusiveLockSet()->find(rid) == txn->GetExclusiveLockSet()->end()) {
+    exec_ctx_->GetLockManager()->LockExclusive(txn, rid);
+  }
+
   bool ok = table_info_->table_->UpdateTuple(new_tuple, rid, exec_ctx_->GetTransaction());
   if (!ok) {
     throw Exception(std::string("UpdateExecutor::Next: failed to update ") +

@@ -35,6 +35,8 @@ void InsertExecutor::Init() {
 auto InsertExecutor::Next([[maybe_unused]] Tuple *unused_a, RID *unused_b) -> bool {
   RID new_rid;
   Tuple new_tuple;
+  Transaction *txn = exec_ctx_->GetTransaction();
+
   if (plan_->IsRawInsert()) {
     if (raw_insert_ptr_ == plan_->RawValues().size()) {
       return false;
@@ -53,6 +55,9 @@ auto InsertExecutor::Next([[maybe_unused]] Tuple *unused_a, RID *unused_b) -> bo
     throw Exception(std::string("InsertExecutor::Next: failed to insert ") +
                     new_tuple.ToString(plan_->GetChildPlan()->OutputSchema()));
   }
+
+  exec_ctx_->GetLockManager()->LockExclusive(txn, new_rid);
+
   // update index
   auto indexes = exec_ctx_->GetCatalog()->GetTableIndexes(table_->name_);
   for (IndexInfo *index : indexes) {
